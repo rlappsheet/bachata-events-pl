@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Ankieta - Bachata Events PL{% endblock %}
+{% block content %}
+<h1>Ankieta: pomóż nam lepiej dopasować wyszukiwarkę</h1>
+<p>Odpowiedzi pomagają ustalić, które miasta, style i źródła warto priorytetowo
+   doczytywać przez skraper. Ankieta jest anonimowa, e-mail jest opcjonalny.</p>
+
+{% if submitted %}
+  <div class="alert success">Dziękujemy! Odpowiedź została zapisana.</div>
+{% endif %}
+
+<form method="post" action="/ankieta" class="survey-form">
+  <label>
+    Które miasta/regiony Cię interesują? (oddziel przecinkami)
+    <input type="text" name="cities" placeholder="np. Warszawa, Kraków, Katowice">
+  </label>
+
+  <label>
+    Maksymalna odległość od Twojej lokalizacji, jaką jesteś w stanie pokonać (km, opcjonalnie)
+    <input type="number" name="max_distance_km" min="0" placeholder="np. 100">
+  </label>
+
+  <fieldset>
+    <legend>Jakie style Cię interesują?</legend>
+    {% for s in style_choices %}
+      <label class="checkbox"><input type="checkbox" name="styles" value="{{ s }}"> {{ s }}</label>
+    {% endfor %}
+  </fieldset>
+
+  <fieldset>
+    <legend>Jakiego typu wydarzeń szukasz?</legend>
+    {% for t in event_type_choices %}
+      <label class="checkbox"><input type="checkbox" name="event_types" value="{{ t }}"> {{ t }}</label>
+    {% endfor %}
+  </fieldset>
+
+  <fieldset>
+    <legend>Skąd najczęściej dowiadujesz się o wydarzeniach? (pomoże dodać kolejne źródła do skrapera)</legend>
+    {% for s in source_choices %}
+      <label class="checkbox"><input type="checkbox" name="preferred_sources" value="{{ s }}"> {{ s }}</label>
+    {% endfor %}
+  </fieldset>
+
+  <label>
+    E-mail (opcjonalnie, do powiadomień w przyszłości)
+    <input type="email" name="email" placeholder="ty@przyklad.pl">
+  </label>
+
+  <label>
+    Uwagi / konkretne strony-źródła, które powinniśmy dodać
+    <textarea name="comments" rows="4" placeholder="np. link do grupy FB, strony lokalnej szkoły tańca..."></textarea>
+  </label>
+
+  <button type="submit">Wyślij ankietę</button>
+</form>
+{% endblock %}

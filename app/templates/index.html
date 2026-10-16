@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Wydarzenia bachata w Polsce{% endblock %}
+{% block content %}
+<h1>Wydarzenia bachata w Polsce</h1>
+
+<form class="filters" method="get" action="/">
+  <input type="text" name="q" placeholder="Szukaj (nazwa, miejsce...)" value="{{ q }}">
+  <select name="city">
+    <option value="">Wszystkie miasta</option>
+    {% for c in cities %}
+      <option value="{{ c }}" {% if c == selected_city %}selected{% endif %}>{{ c }}</option>
+    {% endfor %}
+  </select>
+  <label class="checkbox"><input type="checkbox" name="show_past" value="true" {% if show_past %}checked{% endif %}> pokaż też minione</label>
+  <button type="submit">Filtruj</button>
+</form>
+
+<p class="count">Znaleziono: {{ total }} wydarzeń</p>
+
+{% if events|length == 0 %}
+  <p class="empty">Brak wydarzeń do pokazania. Uruchom scraper: <code>python3 scripts/run_scraper.py</code></p>
+{% endif %}
+
+<div class="event-grid">
+  {% for e in events %}
+  <article class="event-card">
+    {% if e.image_url %}<img src="{{ e.image_url }}" alt="" loading="lazy">{% endif %}
+    <div class="event-body">
+      <div class="event-date">{% if e.date_start %}{{ e.date_start.strftime('%d.%m.%Y') }}{% else %}data nieznana{% endif %}</div>
+      <h2><a href="{{ e.url }}" target="_blank" rel="noopener">{{ e.title }}</a></h2>
+      {% if e.venue %}<p class="venue">📍 {{ e.venue }}{% if e.city %}, {{ e.city }}{% endif %}</p>{% endif %}
+      {% if e.styles %}<p class="styles">{% for s in e.styles.split(',') %}<span class="tag">{{ s }}</span>{% endfor %}</p>{% endif %}
+      {% if e.time_text %}<p class="time">🕒 {{ e.time_text }}</p>{% endif %}
+      <p class="source">źródło: {{ e.source }}</p>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% endblock %}

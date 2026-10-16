@@ -1,0 +1,10 @@
+[Unit]
+Description=Uruchamiaj scraper co 6 godzin
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=6h
+Unit=bachata-scraper.service
+
+[Install]
+WantedBy=timers.target

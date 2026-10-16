@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:////app/data/bachata_events.db
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-change-me}
+    restart: unless-stopped
+
+  scraper:
+    build: .
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:////app/data/bachata_events.db
+    entrypoint: ["sh", "-c", "while true; do python3 scripts/run_scraper.py; sleep 21600; done"]
+    restart: unless-stopped

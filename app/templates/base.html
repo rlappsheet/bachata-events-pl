@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Bachata Events PL{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="brand">💃 Bachata Events PL</a>
+    <nav>
+      <a href="/">Wydarzenia</a>
+      <a href="/ankieta" class="cta">Wypełnij ankietę</a>
+    </nav>
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  <footer>
+    <p>Dane: bachatastars.pl i inne źródła (patrz README). Projekt open-source na GitHub.</p>
+  </footer>
+</body>
+</html>

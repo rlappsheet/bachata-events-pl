@@ -1,0 +1,8 @@
+[Unit]
+Description=Bachata Events PL - uruchomienie scrapera
+
+[Service]
+Type=oneshot
+User=bachata
+WorkingDirectory=/opt/bachata-events-pl
+ExecStart=/opt/bachata-events-pl/.venv/bin/python3 scripts/run_scraper.py

@@ -1,0 +1,15 @@
+[Unit]
+Description=Bachata Events PL - FastAPI web app
+After=network.target
+
+[Service]
+Type=simple
+User=bachata
+WorkingDirectory=/opt/bachata-events-pl
+Environment="PATH=/opt/bachata-events-pl/.venv/bin"
+ExecStart=/opt/bachata-events-pl/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
