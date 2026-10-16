@@ -18,11 +18,17 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models import Event, ScrapeRun, SurveyResponse
 from app.scrapers.bachatastars import BachataStarsScraper
+from app.scrapers.wheretodance import WhereToDanceScraper
+from app.scrapers.socialpass import SocialPassScraper
+from app.scrapers.salsalibre_ics import SalsaLibreCalendarScraper
 
 logger = logging.getLogger("scraper_runner")
 
 SCRAPERS = [
     BachataStarsScraper(),
+    WhereToDanceScraper(),
+    SocialPassScraper(),
+    SalsaLibreCalendarScraper(),
 ]
 
 # Prosty blokujacy flag w pamieci procesu - zapobiega rownoleglemu

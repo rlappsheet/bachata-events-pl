@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.config import ADMIN_TOKEN, BASE_DIR, SCRAPE_FRESHNESS_MINUTES
 from app.database import get_db, init_db
+from app.dedup import dedupe_events
 from app.models import Event, SurveyResponse
 from app.scraper_runner import (
     SCRAPERS,
@@ -77,6 +78,7 @@ def index(
         query = query.filter(or_(Event.title.ilike(like), Event.venue.ilike(like), Event.description.ilike(like)))
 
     events = query.order_by(Event.date_start.is_(None), Event.date_start.asc()).all()
+    events = dedupe_events(events)
 
     cities = sorted({e.city for e in db.query(Event.city).filter(Event.city.isnot(None)).distinct() if e.city})
 
@@ -161,6 +163,7 @@ def api_events(db: Session = Depends(get_db), city: Optional[str] = None):
     if city:
         query = query.filter(Event.city.ilike(f"%{city}%"))
     events = query.order_by(Event.date_start.asc()).all()
+    events = dedupe_events(events)
     return [
         {
             "title": e.title,

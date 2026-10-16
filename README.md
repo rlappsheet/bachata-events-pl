@@ -17,8 +17,15 @@ wydarzenia bachata w Polsce. Zaprojektowana do pracy w sieci lokalnej, z
   cała Polska), style i typy wydarzeń jako klikalne tagi, oraz dynamiczne
   listy (dodaj/usuń) na grupy WhatsApp, strony/grupy Facebook i inne strony
   z wydarzeniami — każdy wpis to potencjalne nowe źródło do skrapera.
-- Skraper `bachatastars.pl/wydarzenia/` (polska strona poświęcona bachacie) —
-  modularny, łatwo dodać kolejne źródła (`app/scrapers/`).
+- Skraper czterech źródeł wydarzeń bachata w Polsce (`app/scrapers/`):
+  - `bachatastars.pl/wydarzenia/` — polska strona poświęcona bachacie,
+  - `where-to-dance-salsa.com` — międzynarodowy katalog festiwali (filtr PL+bachata),
+  - `socialpass.me/poland` — sociale i festiwale w 7 miastach Polski,
+  - `salsalibre.pl` — publiczny kalendarz Google (iCal) z ~870 wydarzeniami w Warszawie.
+  Architektura jest modularna — dodanie kolejnego źródła to nowa klasa `BaseScraper`.
+- Prosta deduplikacja przy wyświetlaniu (`app/dedup.py`): ten sam festiwal
+  zgłoszony przez różne źródła z drobnie inną datą/tytułem pokazuje się jako
+  jedna karta (priorytet dla źródeł dedykowanych Polsce/bachacie).
 - SQLite jako baza (jeden plik, łatwy backup/migracja).
 - REST `/api/events` do dalszej integracji (np. bot, kalendarz).
 - Endpoint administracyjny `/admin/scrape?token=...` do ręcznego odpalenia
@@ -80,17 +87,29 @@ app/
 ├── main.py              FastAPI: trasy / i /ankieta, API, admin
 ├── config.py            konfiguracja z .env
 ├── database.py          SQLAlchemy engine/sesja
-├── models.py            Event, SurveyResponse
+├── dedup.py             deduplikacja wydarzen z roznych zrodel przy wyswietlaniu
+├── models.py            Event, SurveyResponse, ScrapeRun
 ├── scraper_runner.py    uruchamia wszystkie scrapery, zapisuje do bazy
 ├── scrapers/
-│   ├── base.py          interfejs BaseScraper / ScrapedEvent
-│   └── bachatastars.py  scraper bachatastars.pl
+│   ├── base.py           interfejs BaseScraper / ScrapedEvent
+│   ├── bachatastars.py   scraper bachatastars.pl
+│   ├── wheretodance.py   scraper where-to-dance-salsa.com
+│   ├── socialpass.py     scraper socialpass.me/poland
+│   └── salsalibre_ics.py scraper kalendarza iCal salsalibre.pl
 ├── templates/           Jinja2 (base, index, survey)
 └── static/style.css
 scripts/run_scraper.py   CLI do ręcznego/cron odświeżenia danych
 deploy/                  systemd units + instrukcja Proxmox LXC
 tests/test_scraper.py    testy logiki dat skrapera
 ```
+
+## Znane ograniczenia
+
+- Deduplikacja porównuje tytuł (znormalizowany) i datę (tolerancja ±3 dni) —
+  ten sam festiwal zgłoszony przez dwa źródła z większą różnicą dat (zdarza
+  się przy niepewnym parsowaniu) może pokazać się jako dwie karty.
+- `gdziepotancze.pl` i `baciata.pl` sprawdzono, ale są odpowiednio: za ochroną
+  antybotową (503) i z martwą domeną — nie dodano jako źródła.
 
 ## Prywatność i etyka scrapowania
 
