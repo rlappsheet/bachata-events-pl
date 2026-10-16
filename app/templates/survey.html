@@ -1,56 +1,123 @@
 {% extends "base.html" %}
 {% block title %}Ankieta - Bachata Events PL{% endblock %}
 {% block content %}
-<h1>Ankieta: pomóż nam lepiej dopasować wyszukiwarkę</h1>
-<p>Odpowiedzi pomagają ustalić, które miasta, style i źródła warto priorytetowo
-   doczytywać przez skraper. Ankieta jest anonimowa, e-mail jest opcjonalny.</p>
+<div class="survey-wrap">
+  <h1>Pomóż dopasować wyszukiwarkę</h1>
+  <p class="lead">2 minuty. Odpowiedzi ustalają, które miasta/źródła warto priorytetowo dodać do skrapera. Ankieta jest anonimowa, e-mail opcjonalny.</p>
 
-{% if submitted %}
-  <div class="alert success">Dziękujemy! Odpowiedź została zapisana.</div>
-{% endif %}
+  {% if submitted %}
+    <div class="alert success">✅ Dziękujemy! Odpowiedź została zapisana.</div>
+  {% endif %}
 
-<form method="post" action="/ankieta" class="survey-form">
-  <label>
-    Które miasta/regiony Cię interesują? (oddziel przecinkami)
-    <input type="text" name="cities" placeholder="np. Warszawa, Kraków, Katowice">
-  </label>
+  <form method="post" action="/ankieta" class="survey-form" id="surveyForm">
 
-  <label>
-    Maksymalna odległość od Twojej lokalizacji, jaką jesteś w stanie pokonać (km, opcjonalnie)
-    <input type="number" name="max_distance_km" min="0" placeholder="np. 100">
-  </label>
+    <div class="field-row">
+      <label class="field">
+        <span>Twoje miasto</span>
+        <select name="home_city" id="homeCitySelect">
+          <option value="">— wybierz —</option>
+          {% for c in city_choices %}
+            <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+          <option value="inne">Inne (wpisz)</option>
+        </select>
+      </label>
+      <label class="field" id="customCityField" style="display:none;">
+        <span>Jakie miasto?</span>
+        <input type="text" name="custom_city" placeholder="np. Rzeszów">
+      </label>
+      <label class="field">
+        <span>Jak daleko jesteś w stanie jeździć?</span>
+        <select name="distance_scope">
+          {% for value, label in distance_choices %}
+            <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
 
-  <fieldset>
-    <legend>Jakie style Cię interesują?</legend>
-    {% for s in style_choices %}
-      <label class="checkbox"><input type="checkbox" name="styles" value="{{ s }}"> {{ s }}</label>
-    {% endfor %}
-  </fieldset>
+    <div class="field">
+      <span>Style, które Cię interesują</span>
+      <div class="chips">
+        {% for s in style_choices %}
+          <label class="chip"><input type="checkbox" name="styles" value="{{ s }}"><span>{{ s }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
 
-  <fieldset>
-    <legend>Jakiego typu wydarzeń szukasz?</legend>
-    {% for t in event_type_choices %}
-      <label class="checkbox"><input type="checkbox" name="event_types" value="{{ t }}"> {{ t }}</label>
-    {% endfor %}
-  </fieldset>
+    <div class="field">
+      <span>Typ wydarzeń</span>
+      <div class="chips">
+        {% for t in event_type_choices %}
+          <label class="chip"><input type="checkbox" name="event_types" value="{{ t }}"><span>{{ t }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
 
-  <fieldset>
-    <legend>Skąd najczęściej dowiadujesz się o wydarzeniach? (pomoże dodać kolejne źródła do skrapera)</legend>
-    {% for s in source_choices %}
-      <label class="checkbox"><input type="checkbox" name="preferred_sources" value="{{ s }}"> {{ s }}</label>
-    {% endfor %}
-  </fieldset>
+    <div class="link-lists">
+      <div class="link-list" data-field="whatsapp_groups">
+        <span class="link-list-title">Grupy WhatsApp o bachacie, które znasz</span>
+        <div class="link-rows"></div>
+        <button type="button" class="add-row-btn">+ dodaj link</button>
+      </div>
+      <div class="link-list" data-field="facebook_pages">
+        <span class="link-list-title">Strony / grupy Facebook</span>
+        <div class="link-rows"></div>
+        <button type="button" class="add-row-btn">+ dodaj link</button>
+      </div>
+      <div class="link-list" data-field="event_pages">
+        <span class="link-list-title">Inne strony z wydarzeniami</span>
+        <div class="link-rows"></div>
+        <button type="button" class="add-row-btn">+ dodaj link</button>
+      </div>
+    </div>
 
-  <label>
-    E-mail (opcjonalnie, do powiadomień w przyszłości)
-    <input type="email" name="email" placeholder="ty@przyklad.pl">
-  </label>
+    <label class="field">
+      <span>E-mail (opcjonalnie, do powiadomień)</span>
+      <input type="email" name="email" placeholder="ty@przyklad.pl">
+    </label>
 
-  <label>
-    Uwagi / konkretne strony-źródła, które powinniśmy dodać
-    <textarea name="comments" rows="4" placeholder="np. link do grupy FB, strony lokalnej szkoły tańca..."></textarea>
-  </label>
+    <label class="field">
+      <span>Uwagi</span>
+      <textarea name="comments" rows="3" placeholder="cokolwiek jeszcze chcesz dodać..."></textarea>
+    </label>
 
-  <button type="submit">Wyślij ankietę</button>
-</form>
+    <button type="submit" class="submit-btn">Wyślij ankietę</button>
+  </form>
+</div>
+
+<template id="linkRowTemplate">
+  <div class="link-row">
+    <input type="url" placeholder="https://...">
+    <button type="button" class="remove-row-btn" aria-label="Usuń">✕</button>
+  </div>
+</template>
+
+<script>
+// Pokaz pole "Jakie miasto?" tylko gdy wybrano "inne"
+const homeCitySelect = document.getElementById('homeCitySelect');
+const customCityField = document.getElementById('customCityField');
+homeCitySelect.addEventListener('change', () => {
+  customCityField.style.display = homeCitySelect.value === 'inne' ? 'flex' : 'none';
+});
+
+// Dynamiczne listy linkow (whatsapp/facebook/inne strony) - dodaj/usun wiersz
+const rowTemplate = document.getElementById('linkRowTemplate');
+
+function addLinkRow(container, fieldName) {
+  const row = rowTemplate.content.firstElementChild.cloneNode(true);
+  const input = row.querySelector('input');
+  input.name = fieldName;
+  row.querySelector('.remove-row-btn').addEventListener('click', () => row.remove());
+  container.appendChild(row);
+}
+
+document.querySelectorAll('.link-list').forEach(list => {
+  const fieldName = list.dataset.field;
+  const rowsContainer = list.querySelector('.link-rows');
+  list.querySelector('.add-row-btn').addEventListener('click', () => addLinkRow(rowsContainer, fieldName));
+  // startowo jedno puste pole, zeby bylo widac co wpisac
+  addLinkRow(rowsContainer, fieldName);
+});
+</script>
 {% endblock %}

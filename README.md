@@ -7,9 +7,16 @@ wydarzenia bachata w Polsce. Zaprojektowana do pracy w sieci lokalnej, z
 ## Funkcje
 
 - Strona startowa z listą nadchodzących wydarzeń bachata w Polsce,
-  filtrowanie po mieście i tekście.
-- Ankieta (`/ankieta`) zbierająca preferencje użytkowników (miasta, style,
-  typy wydarzeń, źródła), żeby lepiej dopasować/priorytetyzować skraper.
+  filtrowanie po mieście i tekście, baner "ostatnia aktualizacja bazy: ...".
+- Każde wejście na stronę główną sprawdza świeżość danych i — jeśli są
+  starsze niż `SCRAPE_FRESHNESS_MINUTES` (domyślnie 60 min) — zleca
+  odświeżenie **w tle** (osobny wątek, z blokadą przed równoległym
+  odpaleniem dwóch scraperów naraz). Strona nigdy nie czeka na scraper.
+- Ankieta (`/ankieta`), kompaktowa i w stylu "chips": wybór miasta z listy
+  (Warszawa/Katowice/Kraków/Poznań/...) + promień (5/10/15/25/100/150 km lub
+  cała Polska), style i typy wydarzeń jako klikalne tagi, oraz dynamiczne
+  listy (dodaj/usuń) na grupy WhatsApp, strony/grupy Facebook i inne strony
+  z wydarzeniami — każdy wpis to potencjalne nowe źródło do skrapera.
 - Skraper `bachatastars.pl/wydarzenia/` (polska strona poświęcona bachacie) —
   modularny, łatwo dodać kolejne źródła (`app/scrapers/`).
 - SQLite jako baza (jeden plik, łatwy backup/migracja).

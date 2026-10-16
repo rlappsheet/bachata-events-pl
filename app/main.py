@@ -1,19 +1,25 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+import json
+from datetime import date
 from typing import Optional
 
-from fastapi import FastAPI, Request, Depends, Form, HTTPException
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi import FastAPI, Request, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.config import ADMIN_TOKEN, BASE_DIR
+from app.config import ADMIN_TOKEN, BASE_DIR, SCRAPE_FRESHNESS_MINUTES
 from app.database import get_db, init_db
 from app.models import Event, SurveyResponse
-from app.scraper_runner import run_all_scrapers, get_survey_priorities
+from app.scraper_runner import (
+    run_all_scrapers,
+    get_survey_priorities,
+    get_last_scrape_info,
+    trigger_background_refresh_if_stale,
+)
 
 app = FastAPI(title="Bachata Events PL")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "app" / "static")), name="static")
@@ -21,7 +27,16 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
 
 STYLE_CHOICES = ["sensual", "dominicana", "urban", "zouk", "kizomba", "salsa"]
 EVENT_TYPE_CHOICES = ["festiwal", "social", "warsztaty", "wyjazd/plener"]
-SOURCE_CHOICES = ["bachatastars.pl", "Facebook", "Instagram", "Grupy WhatsApp", "Inne (napisz w komentarzu)"]
+CITY_CHOICES = ["Warszawa", "Katowice", "Kraków", "Poznań", "Wrocław", "Gdańsk", "Łódź"]
+DISTANCE_CHOICES = [
+    ("5", "5 km"),
+    ("10", "10 km"),
+    ("15", "15 km"),
+    ("25", "25 km"),
+    ("100", "100 km"),
+    ("150", "150 km"),
+    ("all", "Cała Polska"),
+]
 
 
 @app.on_event("startup")
@@ -42,6 +57,12 @@ def index(
     q: Optional[str] = None,
     show_past: bool = False,
 ):
+    # Dane sa odswiezane w tle, nie przy kazdym requescie synchronicznie -
+    # uzytkownik nigdy nie czeka na scraper, ale sprawdzenie "czy jest nowe"
+    # odbywa sie przy kazdym wejsciu na strone glowna.
+    trigger_background_refresh_if_stale(SCRAPE_FRESHNESS_MINUTES)
+    scrape_info = get_last_scrape_info()
+
     query = db.query(Event)
     if not show_past:
         query = query.filter(or_(Event.date_start >= date.today(), Event.date_start.is_(None)))
@@ -65,6 +86,7 @@ def index(
             "q": q or "",
             "show_past": show_past,
             "total": len(events),
+            "scrape_info": scrape_info,
         },
     )
 
@@ -77,32 +99,39 @@ def survey_form(request: Request):
             "request": request,
             "style_choices": STYLE_CHOICES,
             "event_type_choices": EVENT_TYPE_CHOICES,
-            "source_choices": SOURCE_CHOICES,
+            "city_choices": CITY_CHOICES,
+            "distance_choices": DISTANCE_CHOICES,
             "submitted": False,
         },
     )
 
 
 @app.post("/ankieta")
-def survey_submit(
-    request: Request,
-    cities: str = Form(""),
-    max_distance_km: Optional[int] = Form(None),
-    styles: list[str] = Form([]),
-    preferred_sources: list[str] = Form([]),
-    event_types: list[str] = Form([]),
-    email: str = Form(""),
-    comments: str = Form(""),
-    db: Session = Depends(get_db),
-):
+async def survey_submit(request: Request, db: Session = Depends(get_db)):
+    # Formularz jest parsowany recznie (request.form()), nie przez Pydantic/Form(...):
+    # pola list (style, linki whatsapp/fb/event) sa dynamiczne (dodawane/usuwane w JS)
+    # i opcjonalne puste wartosci liczbowe wczesniej powodowaly błąd walidacji 422
+    # (odpowiedź JSON zamiast strony) - recznie parsujemy, zeby to wykluczyc raz na zawsze.
+    form = await request.form()
+
+    def _getlist_clean(key: str) -> list[str]:
+        return [v.strip() for v in form.getlist(key) if v and v.strip()]
+
+    home_city = (form.get("home_city") or "").strip()
+    custom_city = (form.get("custom_city") or "").strip()
+    distance_scope = (form.get("distance_scope") or "").strip()
+
     response = SurveyResponse(
-        cities=cities.strip(),
-        max_distance_km=max_distance_km,
-        styles=",".join(styles),
-        preferred_sources=",".join(preferred_sources),
-        event_types=",".join(event_types),
-        email=email.strip() or None,
-        comments=comments.strip() or None,
+        home_city=home_city or None,
+        custom_city=custom_city or None,
+        distance_scope=distance_scope or None,
+        styles=",".join(_getlist_clean("styles")),
+        event_types=",".join(_getlist_clean("event_types")),
+        whatsapp_groups=json.dumps(_getlist_clean("whatsapp_groups")),
+        facebook_pages=json.dumps(_getlist_clean("facebook_pages")),
+        event_pages=json.dumps(_getlist_clean("event_pages")),
+        email=(form.get("email") or "").strip() or None,
+        comments=(form.get("comments") or "").strip() or None,
     )
     db.add(response)
     db.commit()
@@ -113,7 +142,8 @@ def survey_submit(
             "request": request,
             "style_choices": STYLE_CHOICES,
             "event_type_choices": EVENT_TYPE_CHOICES,
-            "source_choices": SOURCE_CHOICES,
+            "city_choices": CITY_CHOICES,
+            "distance_choices": DISTANCE_CHOICES,
             "submitted": True,
         },
     )

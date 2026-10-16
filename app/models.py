@@ -29,14 +29,48 @@ class Event(Base):
 
 
 class SurveyResponse(Base):
+    """Ankieta dopasowania skrapera.
+
+    `home_city`/`custom_city` + `distance_scope` mówią nam, z jakiego miasta
+    liczyć odległość i jak daleko użytkownik jest skłonny jeździć - to
+    zastępuje poprzednie, niejednoznaczne wolne pole "cities".
+
+    `whatsapp_groups` / `facebook_pages` / `event_pages` to listy linków
+    (serializowane jako JSON) dodawane/usuwane dynamicznie w formularzu -
+    każdy wpis to potencjalne nowe źródło do dopisania do skrapera.
+    """
+
     __tablename__ = "survey_responses"
 
     id = Column(Integer, primary_key=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    cities = Column(String(500), nullable=True)          # preferowane miasta, oddzielone przecinkiem
-    max_distance_km = Column(Integer, nullable=True)
+
+    home_city = Column(String(100), nullable=True)      # np. "Warszawa" albo "inne"
+    custom_city = Column(String(200), nullable=True)     # wypełniane gdy home_city == "inne"
+    distance_scope = Column(String(20), nullable=True)   # "5"|"10"|"15"|"25"|"100"|"150"|"all"
+
     styles = Column(String(300), nullable=True)           # sensual, dominicana, urban, festival, social, workshop
-    preferred_sources = Column(String(500), nullable=True)  # np. Facebook, bachatastars.pl, Instagram...
     event_types = Column(String(300), nullable=True)      # festiwal, social, warsztaty, wyjazd
+
+    whatsapp_groups = Column(Text, nullable=True)  # JSON: ["https://chat.whatsapp.com/..."]
+    facebook_pages = Column(Text, nullable=True)   # JSON: ["https://facebook.com/..."]
+    event_pages = Column(Text, nullable=True)      # JSON: ["https://..."] - inne strony z eventami
+
     email = Column(String(300), nullable=True)
     comments = Column(Text, nullable=True)
+
+
+class ScrapeRun(Base):
+    """Historia uruchomień skrapera - pokazywana na stronie głównej jako
+    'ostatnia aktualizacja bazy' i używana do decyzji o odświeżeniu w tle."""
+
+    __tablename__ = "scrape_runs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    started_at = Column(DateTime, default=datetime.utcnow)
+    finished_at = Column(DateTime, nullable=True)
+    status = Column(String(20), default="running")  # running | ok | error
+    events_found = Column(Integer, default=0)
+    events_created = Column(Integer, default=0)
+    events_updated = Column(Integer, default=0)
+    error_message = Column(Text, nullable=True)
