@@ -15,6 +15,7 @@ from app.config import ADMIN_TOKEN, BASE_DIR, SCRAPE_FRESHNESS_MINUTES
 from app.database import get_db, init_db
 from app.models import Event, SurveyResponse
 from app.scraper_runner import (
+    SCRAPERS,
     run_all_scrapers,
     get_survey_priorities,
     get_last_scrape_info,
@@ -37,6 +38,9 @@ DISTANCE_CHOICES = [
     ("150", "150 km"),
     ("all", "Cała Polska"),
 ]
+# Źródła, które skraper już przeszukuje domyślnie - pokazywane w ankiecie
+# jako zablokowane/nieusuwalne, żeby było wiadomo co jest już pokryte.
+DEFAULT_SOURCES = [scraper.name for scraper in SCRAPERS]
 
 
 @app.on_event("startup")
@@ -101,6 +105,7 @@ def survey_form(request: Request):
             "event_type_choices": EVENT_TYPE_CHOICES,
             "city_choices": CITY_CHOICES,
             "distance_choices": DISTANCE_CHOICES,
+            "default_sources": DEFAULT_SOURCES,
             "submitted": False,
         },
     )
@@ -144,6 +149,7 @@ async def survey_submit(request: Request, db: Session = Depends(get_db)):
             "event_type_choices": EVENT_TYPE_CHOICES,
             "city_choices": CITY_CHOICES,
             "distance_choices": DISTANCE_CHOICES,
+            "default_sources": DEFAULT_SOURCES,
             "submitted": True,
         },
     )

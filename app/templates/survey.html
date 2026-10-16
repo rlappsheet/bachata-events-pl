@@ -3,7 +3,16 @@
 {% block content %}
 <div class="survey-wrap">
   <h1>Pomóż dopasować wyszukiwarkę</h1>
-  <p class="lead">2 minuty. Odpowiedzi ustalają, które miasta/źródła warto priorytetowo dodać do skrapera. Ankieta jest anonimowa, e-mail opcjonalny.</p>
+  <p class="lead">2 minuty, zero rejestracji. Ankieta nie wysyła żadnych powiadomień
+    — zapisuje Twoje odpowiedzi do bazy, a te pomagają nam zdecydować:</p>
+  <ul class="explain-list">
+    <li>które <strong>miasta</strong> i promień wyszukiwania pokazywać jako najważniejsze,</li>
+    <li>które <strong>style</strong> i typy wydarzeń są najbardziej poszukiwane,</li>
+    <li>jakie <strong>nowe strony/grupy</strong> (WhatsApp, Facebook, inne) warto dodać do skrapera.</li>
+  </ul>
+  <p class="note">E-mail jest opcjonalny i na razie <strong>nie uruchamia żadnych
+    powiadomień</strong> — zapisujemy go wyłącznie na przyszłość, gdyby powstała
+    funkcja powiadomień o nowych wydarzeniach.</p>
 
   {% if submitted %}
     <div class="alert success">✅ Dziękujemy! Odpowiedź została zapisana.</div>
@@ -55,25 +64,33 @@
     </div>
 
     <div class="link-lists">
+      <div class="locked-sources">
+        <span class="link-list-title">Strony, które już przeszukujemy (domyślne, nie można usunąć)</span>
+        <div class="chips">
+          {% for s in default_sources %}
+            <span class="chip locked"><span>🔒 {{ s }}</span></span>
+          {% endfor %}
+        </div>
+      </div>
       <div class="link-list" data-field="whatsapp_groups">
-        <span class="link-list-title">Grupy WhatsApp o bachacie, które znasz</span>
+        <span class="link-list-title">Grupy WhatsApp o bachacie, które znasz (dodaj własne)</span>
         <div class="link-rows"></div>
         <button type="button" class="add-row-btn">+ dodaj link</button>
       </div>
       <div class="link-list" data-field="facebook_pages">
-        <span class="link-list-title">Strony / grupy Facebook</span>
+        <span class="link-list-title">Strony / grupy Facebook (dodaj własne)</span>
         <div class="link-rows"></div>
         <button type="button" class="add-row-btn">+ dodaj link</button>
       </div>
       <div class="link-list" data-field="event_pages">
-        <span class="link-list-title">Inne strony z wydarzeniami</span>
+        <span class="link-list-title">Inne strony z wydarzeniami (dodaj własne)</span>
         <div class="link-rows"></div>
         <button type="button" class="add-row-btn">+ dodaj link</button>
       </div>
     </div>
 
     <label class="field">
-      <span>E-mail (opcjonalnie, do powiadomień)</span>
+      <span>E-mail (opcjonalnie — zapisywany na przyszłość, nic nie wysyłamy teraz)</span>
       <input type="email" name="email" placeholder="ty@przyklad.pl">
     </label>
 

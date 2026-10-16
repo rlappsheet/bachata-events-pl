@@ -68,7 +68,11 @@ h1 { color: var(--text); font-size: 1.5rem; margin: 0 0 0.3rem; }
 
 /* --- Ankieta: kompaktowy, modern uklad --- */
 .survey-wrap { max-width: 640px; }
-.survey-wrap .lead { color: var(--muted); font-size: 0.88rem; margin-top: 0; margin-bottom: 1.2rem; }
+.survey-wrap .lead { color: var(--muted); font-size: 0.88rem; margin-top: 0; margin-bottom: 0.6rem; }
+.explain-list { margin: 0 0 0.9rem; padding-left: 1.1rem; color: var(--muted); font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.25rem; }
+.explain-list strong { color: var(--text); }
+.note { background: var(--card-2); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.8rem; color: var(--muted); font-size: 0.82rem; margin-bottom: 1.2rem; }
+.note strong { color: var(--text); }
 .survey-form { display: flex; flex-direction: column; gap: 1.1rem; }
 .field-row { display: flex; gap: 0.8rem; flex-wrap: wrap; }
 .field-row .field { flex: 1 1 160px; }
@@ -92,6 +96,8 @@ h1 { color: var(--text); font-size: 1.5rem; margin: 0 0 0.3rem; }
 
 .link-lists { display: flex; flex-direction: column; gap: 0.9rem; background: var(--card-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem; }
 .link-list-title { display: block; color: var(--muted); font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem; }
+.locked-sources { padding-bottom: 0.6rem; border-bottom: 1px dashed var(--border); margin-bottom: 0.2rem; }
+.chip.locked span { background: var(--bg); color: var(--muted); cursor: default; border-color: var(--border); }
 .link-rows { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.4rem; }
 .link-row { display: flex; gap: 0.4rem; }
 .link-row input {
